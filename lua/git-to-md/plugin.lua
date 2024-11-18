@@ -1,7 +1,7 @@
 local tmp_file = ".tmp.lua.txt"
 
 local history_block = '# Commit History\n\n'
-local branch_block =  '## %s\n'
+local branch_block =  '\n## %s'
 
 local state_colors = {
   ['A'] = 'green',
@@ -12,13 +12,13 @@ local state_wrapper = '<span style="color:%s">***[%s]*** %s</span>\n'
 
 local date_format = '%H:%M:%S %z'
 local commit_format =
-'### %s%n' ..
+'\n### %s%n' ..
 '- **Hash:** %h%n' ..
 '- **Date:** %as%n' ..
 '- **Author:** %an \\<%ae\\>%n' ..
 '- **UNIX Timestamp:** %at%n' ..
 '- **Time:** %ad%n' ..
-'- **File state:**%n'
+'- **File state:**'
 
 local get_branches = 'git for-each-ref --format="%(refname:short)" refs/heads'
 local get_branch_commits = 'git rev-list %s'
@@ -92,7 +92,7 @@ local function CreateMarkdown(branches, filename)
         output:write("  - " .. str)
       end
       tmp:close()
-
+      os.remove(tmp_file)
     end
 
   end

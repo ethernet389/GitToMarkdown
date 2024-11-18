@@ -1,2 +1,0 @@
-A	docs/README.md
-A	lua/git-to-md/plugin.lua
