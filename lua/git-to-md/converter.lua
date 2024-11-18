@@ -1,5 +1,7 @@
 require("formats")
 
+_G.conv = {}
+
 local tmp_file = ".tmp.lua.txt"
 
 local get_branches = 'git for-each-ref --format="%(refname:short)" refs/heads'
@@ -8,7 +10,7 @@ local get_commit_files = 'git show %s --name-status --pretty=""'
 local get_commit_info = 'git log --format="%s" --date=format:"%s" -1 %s'
 
 
-local function GetBranches()
+conv.GetBranches = function()
   os.execute(get_branches .. ">" .. tmp_file)
   local branch_file = io.open(tmp_file)
   if not branch_file then
@@ -24,7 +26,7 @@ local function GetBranches()
   return branches
 end
 
-local function GetBranchCommits(branches)
+conv.GetBranchCommits = function(branches)
   for branch, commits in pairs(branches) do
     os.execute(get_branch_commits:format(branch) .. ">" .. tmp_file)
 
@@ -41,7 +43,7 @@ local function GetBranchCommits(branches)
   end
 end
 
-local function WriteCommitInfo(output, commit)
+conv.WriteCommitInfo = function(output, commit)
   local commit_info = get_commit_info:format(formats.commit_block, formats.time, commit)
   os.execute(commit_info .. ">" .. tmp_file)
   local tmp = io.open(tmp_file, "r")
@@ -54,7 +56,7 @@ local function WriteCommitInfo(output, commit)
   os.remove(tmp_file)
 end
 
-local function WriteFilesOfCommit(output, commit)
+conv.WriteFilesOfCommit = function(output, commit)
   os.execute(get_commit_files:format(commit) .. ">" .. tmp_file)
   local tmp = io.open(tmp_file, "r")
   if not tmp then
@@ -72,7 +74,7 @@ local function WriteFilesOfCommit(output, commit)
   os.remove(tmp_file)
 end
 
-local function CreateMarkdown(branches, filename)
+conv.CreateMarkdown = function(branches, filename)
   local output = io.open(filename, "w")
   if not output then
     error("Can't open output file!")
@@ -84,14 +86,11 @@ local function CreateMarkdown(branches, filename)
     output:write(formats.branch_block:format(branch))
 
     for _, commit in pairs(commits) do
-      WriteCommitInfo(output, commit)
-      WriteFilesOfCommit(output, commit)
+      conv.WriteCommitInfo(output, commit)
+      conv.WriteFilesOfCommit(output, commit)
     end
 
   end
 end
 
-
-local branches = GetBranches()
-GetBranchCommits(branches)
-CreateMarkdown(branches, "output.md")
+return conv
