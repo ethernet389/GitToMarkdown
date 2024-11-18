@@ -1,29 +1,12 @@
+require("formats")
+
 local tmp_file = ".tmp.lua.txt"
-
-local history_block = '# Commit History\n\n'
-local branch_block =  '\n## %s'
-
-local state_colors = {
-  ['A'] = 'green',
-  ['M'] = 'yellow',
-  ['D'] = 'red'
-}
-local state_wrapper = '<span style="color:%s">***[%s]*** %s</span>\n'
-
-local date_format = '%H:%M:%S %z'
-local commit_format =
-'\n### %s%n' ..
-'- **Hash:** %h%n' ..
-'- **Date:** %as%n' ..
-'- **Author:** %an \\<%ae\\>%n' ..
-'- **UNIX Timestamp:** %at%n' ..
-'- **Time:** %ad%n' ..
-'- **File state:**'
 
 local get_branches = 'git for-each-ref --format="%(refname:short)" refs/heads'
 local get_branch_commits = 'git rev-list %s'
 local get_commit_files = 'git show %s --name-status --pretty=""'
 local get_commit_info = 'git log --format="%s" --date=format:"%s" -1 %s'
+
 
 local function GetBranches()
   os.execute(get_branches .. ">" .. tmp_file)
@@ -58,41 +41,51 @@ local function GetBranchCommits(branches)
   end
 end
 
+local function WriteCommitInfo(output, commit)
+  local commit_info = get_commit_info:format(formats.commit_block, formats.time, commit)
+  os.execute(commit_info .. ">" .. tmp_file)
+  local tmp = io.open(tmp_file, "r")
+  if not tmp then
+    error("Can't open temporary file!")
+  end
+
+  output:write(tmp:read("a"))
+  tmp:close()
+  os.remove(tmp_file)
+end
+
+local function WriteFilesOfCommit(output, commit)
+  os.execute(get_commit_files:format(commit) .. ">" .. tmp_file)
+  local tmp = io.open(tmp_file, "r")
+  if not tmp then
+    error("Can't open temporary file!")
+  end
+
+  for file_state in tmp:lines() do
+    local state, file = file_state:sub(1, 1), file_state:sub(2, #file_state)
+    local str = formats.state_wrapper:format(formats.state_colors[state], state, file)
+
+    output:write("  - " .. str)
+  end
+
+  tmp:close()
+  os.remove(tmp_file)
+end
+
 local function CreateMarkdown(branches, filename)
   local output = io.open(filename, "w")
   if not output then
     error("Can't open output file!")
   end
 
-  output:write(history_block)
+  output:write(formats.history_block)
 
   for branch, commits in pairs(branches) do
-    output:write(branch_block:format(branch))
+    output:write(formats.branch_block:format(branch))
 
     for _, commit in pairs(commits) do
-      os.execute(get_commit_info:format(commit_format, date_format, commit) .. ">" .. tmp_file)
-      local tmp = io.open(tmp_file, "r")
-      if not tmp then
-        error("Can't open temporary file!")
-      end
-
-      output:write(tmp:read("a"))
-      tmp:close()
-
-      os.execute(get_commit_files:format(commit) .. ">" .. tmp_file)
-      tmp = io.open(tmp_file, "r")
-      if not tmp then
-        error("Can't open temporary file!")
-      end
-
-      for file_state in tmp:lines() do
-        local state, file = file_state:sub(1, 1), file_state:sub(2, #file_state)
-        local str = state_wrapper:format(state_colors[state], state, file)
-
-        output:write("  - " .. str)
-      end
-      tmp:close()
-      os.remove(tmp_file)
+      WriteCommitInfo(output, commit)
+      WriteFilesOfCommit(output, commit)
     end
 
   end
