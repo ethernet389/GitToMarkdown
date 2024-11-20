@@ -41,13 +41,17 @@ plugin.setup = function (new_formats)
     'GitToMd',
     function (opts)
       git_to_markdown(opts.fargs[1])
+      vim.api.nvim_out_write("Git history write in the " .. opts.fargs[1] .. "\n")
     end,
     { nargs = 1 }
   )
 
   vim.api.nvim_create_user_command(
     'GitToMdBuffer',
-    git_markdown_buffer,
+    function ()
+      git_markdown_buffer()
+      vim.api.nvim_out_write("Git history saved in the clipboard\n")
+    end,
     {}
   )
 end
