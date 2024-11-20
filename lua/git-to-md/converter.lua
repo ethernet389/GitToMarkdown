@@ -2,13 +2,30 @@ require("git-to-md.formats")
 
 _G.conv = {}
 
-local tmp_file = ".tmp.lua.txt"
+local tmp_file = ".there_is_nothing_to_see.go_away.tmp.lua.txt.lol"
 
+local git_check = 'git rev-parse --git-dir'
 local get_branches = 'git for-each-ref --format="%(refname:short)" refs/heads'
 local get_branch_commits = 'git rev-list %s'
 local get_commit_files = 'git show %s --name-status --pretty=""'
 local get_commit_info = 'git log --format="%s" --date=format:"%s" -1 %s'
 
+conv.dir_is_repository = function()
+  os.execute(git_check .. ' 1> ' .. tmp_file .. ' 2> ' .. tmp_file .. '.err')
+
+  local prompt = io.open(tmp_file, "r")
+  if not prompt then
+    error("Can't open " .. tmp_file .. "!")
+  end
+
+  local msg = prompt:read("a")
+  if msg == "" then
+    return "Current directory is not repository!"
+  end
+
+  os.remove(tmp_file)
+  os.remove(tmp_file .. '.err')
+end
 
 conv.set_branches = function()
   os.execute(get_branches .. ">" .. tmp_file)
@@ -33,7 +50,7 @@ conv.get_branch_commits = function(branches)
 
     local file_commits = io.open(tmp_file)
     if not file_commits then
-      error(("Can't open file with %s commits!"):format(branch))
+      error(("Can't open file withgit rev-parse --git-dir %s commits!"):format(branch))
     end
 
     for commit in file_commits:lines() do
