@@ -1,4 +1,4 @@
-require("formats")
+require("lua.git-to-md.formats")
 
 _G.conv = {}
 
@@ -23,6 +23,7 @@ conv.GetBranches = function()
   end
 
   io.close()
+  os.remove(tmp_file)
   return branches
 end
 
@@ -40,6 +41,15 @@ conv.GetBranchCommits = function(branches)
     end
 
     file_commits:close()
+  end
+  os.remove(tmp_file)
+end
+
+local function FindWhiteSpace(str)
+  for idx = 1, #str do
+    if str:sub(idx, idx) == ' ' then
+      return idx
+    end
   end
 end
 
@@ -64,8 +74,11 @@ conv.WriteFilesOfCommit = function(output, commit)
   end
 
   for file_state in tmp:lines() do
-    local state, file = file_state:sub(1, 1), file_state:sub(2, #file_state)
-    local str = formats.state_wrapper:format(formats.state_colors[state], state, file)
+    file_state = file_state:gsub('%s+', ' ')
+    local idx = FindWhiteSpace(file_state) - 1
+    local state, file = file_state:sub(1, idx), file_state:sub(idx + 1, #file_state)
+    local color = formats.state_colors[state:sub(1, 1)]
+    local str = formats.state_wrapper:format(color, state, file)
 
     output:write("  - " .. str)
   end

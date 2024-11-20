@@ -14,11 +14,16 @@ formats.commit_block =
 '- **Time:** %ad%n' ..
 '- **File state:**'
 
-formats.state_wrapper = '<span style="color:%s">***[%s]*** %s</span>\n'
+formats.state_wrapper = '<span style="color:%s">***%s*** &nbsp;&nbsp; %s</span>\n'
 formats.state_colors = {
-  ['A'] = 'green',
-  ['M'] = 'yellow',
-  ['D'] = 'red'
+  ['A'] = 'chartreuse',  -- Added
+  ['M'] = 'yellow',      -- Modified
+  ['D'] = 'crimson',     -- Deleted
+  ['R'] = 'violet',      -- Renamed
+  ['T'] = 'sandybrown',  -- Type changed
+  ['C'] = 'aquamarine',  -- Copied
+  ['U'] = 'red',         -- Unmerged
+  ['X'] = 'deeppink'     -- Unknown
 }
 
 return formats
