@@ -1,12 +1,11 @@
 require('git-to-md.converter')
 require('git-to-md.formats')
 
-local plugin = {}
+local M = {}
 
 local git_to_markdown = function(filename)
   local msg = conv.dir_is_repository()
   if msg then
-    vim.api.nvim_err_writeln(msg)
     return msg
   end
 
@@ -34,14 +33,18 @@ local git_markdown_buffer = function ()
   os.remove(tmp_filename)
 end
 
-plugin.setup = function (new_formats)
+M.setup = function (new_formats)
   formats.set(new_formats)
 
   vim.api.nvim_create_user_command(
     'GitToMd',
     function (opts)
-      git_to_markdown(opts.fargs[1])
-      vim.api.nvim_out_write("Git history write in the " .. opts.fargs[1] .. "\n")
+      local msg = git_to_markdown(opts.fargs[1])
+      if msg then
+        vim.api.nvim_err_writeln(msg)
+      else
+        vim.api.nvim_out_write("Git history write in the " .. opts.fargs[1] .. "\n")
+      end
     end,
     { nargs = 1 }
   )
@@ -49,11 +52,15 @@ plugin.setup = function (new_formats)
   vim.api.nvim_create_user_command(
     'GitToMdBuffer',
     function ()
-      git_markdown_buffer()
-      vim.api.nvim_out_write("Git history saved in the clipboard\n")
+      local msg = git_markdown_buffer()
+      if msg then
+        vim.api.nvim_err_writeln(msg)
+      else
+        vim.api.nvim_out_write("Git history saved in the clipboard\n")
+      end
     end,
     {}
   )
 end
 
-return plugin
+return M
