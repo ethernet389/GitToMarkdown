@@ -1,4 +1,4 @@
-require("lua.git-to-md.formats")
+require("git-to-md.formats")
 
 _G.conv = {}
 
@@ -10,7 +10,7 @@ local get_commit_files = 'git show %s --name-status --pretty=""'
 local get_commit_info = 'git log --format="%s" --date=format:"%s" -1 %s'
 
 
-conv.GetBranches = function()
+conv.set_branches = function()
   os.execute(get_branches .. ">" .. tmp_file)
   local branch_file = io.open(tmp_file)
   if not branch_file then
@@ -27,7 +27,7 @@ conv.GetBranches = function()
   return branches
 end
 
-conv.GetBranchCommits = function(branches)
+conv.get_branch_commits = function(branches)
   for branch, commits in pairs(branches) do
     os.execute(get_branch_commits:format(branch) .. ">" .. tmp_file)
 
@@ -45,7 +45,7 @@ conv.GetBranchCommits = function(branches)
   os.remove(tmp_file)
 end
 
-local function FindWhiteSpace(str)
+local function find_white_space(str)
   for idx = 1, #str do
     if str:sub(idx, idx) == ' ' then
       return idx
@@ -53,8 +53,14 @@ local function FindWhiteSpace(str)
   end
 end
 
-conv.WriteCommitInfo = function(output, commit)
-  local commit_info = get_commit_info:format(formats.commit_block, formats.time, commit)
+conv.write_commit_info = function(output, commit)
+  local commit_info =
+    get_commit_info:format(
+      formats.commit_block,
+      formats.time_format,
+      commit
+    )
+
   os.execute(commit_info .. ">" .. tmp_file)
   local tmp = io.open(tmp_file, "r")
   if not tmp then
@@ -66,7 +72,7 @@ conv.WriteCommitInfo = function(output, commit)
   os.remove(tmp_file)
 end
 
-conv.WriteFilesOfCommit = function(output, commit)
+conv.write_files_of_commit = function(output, commit)
   os.execute(get_commit_files:format(commit) .. ">" .. tmp_file)
   local tmp = io.open(tmp_file, "r")
   if not tmp then
@@ -75,7 +81,7 @@ conv.WriteFilesOfCommit = function(output, commit)
 
   for file_state in tmp:lines() do
     file_state = file_state:gsub('%s+', ' ')
-    local idx = FindWhiteSpace(file_state) - 1
+    local idx = find_white_space(file_state) - 1
     local state, file = file_state:sub(1, idx), file_state:sub(idx + 1, #file_state)
     local color = formats.state_colors[state:sub(1, 1)]
     local str = formats.state_wrapper:format(color, state, file)
@@ -87,7 +93,7 @@ conv.WriteFilesOfCommit = function(output, commit)
   os.remove(tmp_file)
 end
 
-conv.CreateMarkdown = function(branches, filename)
+conv.create_markdown = function(branches, filename)
   local output = io.open(filename, "w")
   if not output then
     error("Can't open output file!")
@@ -99,8 +105,8 @@ conv.CreateMarkdown = function(branches, filename)
     output:write(formats.branch_block:format(branch))
 
     for _, commit in pairs(commits) do
-      conv.WriteCommitInfo(output, commit)
-      conv.WriteFilesOfCommit(output, commit)
+      conv.write_commit_info(output, commit)
+      conv.write_files_of_commit(output, commit)
     end
 
   end

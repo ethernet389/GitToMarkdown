@@ -1,14 +1,32 @@
-require('lua.git-to-md.converter')
+require('git-to-md.converter')
+require('git-to-md.formats')
 
-_G.git_to_md = {}
+local plugin = {}
 
-git_to_md.GitToMarkdown = function(filename)
-  local branches = conv.GetBranches()
-  conv.GetBranchCommits(branches)
-  conv.CreateMarkdown(branches, filename)
+plugin.git_to_markdown = function(filename)
+  local branches = conv.set_branches()
+  conv.get_branch_commits(branches)
+  conv.create_markdown(branches, filename)
 end
 
--- vim.api.nvim_create_user_command('GitToMd',
---                                  git_to_md.GitToMarkdown("output.md"), {})
+plugin.setup = function (new_formats)
+  formats.set(new_formats)
 
-return git_to_md
+  vim.api.nvim_create_user_command(
+    'GitToMd',
+    function (opts)
+      plugin.git_to_markdown(opts.fargs[1])
+    end,
+    { nargs = 1 }
+  )
+
+  vim.api.nvim_create_user_command(
+    'GitToMd',
+    function ()
+      plugin.git_to_markdown("output.md")
+    end,
+    { nargs = 0 }
+  )
+end
+
+return plugin
