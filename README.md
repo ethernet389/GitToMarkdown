@@ -173,4 +173,7 @@ Table of colors connected with each file state in **git**
 ```
 `['Git file state'] = 'HTML color code (or RGB)'`
 
+# Author
+Глеб Симаков M3101 467462
+
 ![example](example.png)
