@@ -6,7 +6,7 @@ local tmp_file = ".there_is_nothing_to_see.go_away.tmp.lua.txt.lol"
 
 local git_check = 'git rev-parse --git-dir'
 local get_branches = 'git for-each-ref --format="%(refname:short)" refs/heads'
-local get_branch_commits = 'git rev-list %s'
+local get_branch_commits = 'git rev-list %s --'
 local get_commit_files = 'git show %s --name-status --pretty=""'
 local get_commit_info = 'git log --format="%s" --date=format:"%s" -1 %s'
 
@@ -27,7 +27,7 @@ conv.dir_is_repository = function()
   os.remove(tmp_file .. '.err')
 end
 
-conv.set_branches = function()
+conv.get_branches = function()
   os.execute(get_branches .. ">" .. tmp_file)
   local branch_file = io.open(tmp_file)
   if not branch_file then
