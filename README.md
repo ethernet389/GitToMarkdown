@@ -43,7 +43,9 @@ require("lazy").setup({
           }
         }
 
-        require('git-to-md').setup(formats)
+        local clipboard_name = "cp"
+
+        require('git-to-md').setup(formats, clipboard_name)
       end
     }
   })
@@ -54,11 +56,23 @@ require("lazy").setup({
 - git
 
 ## Commands
-`:GitToMd path/to/file` - create git history and write into `path/to/file`
+`:GitToMd path/to/file branch1 branch2 branch3...` 
+- Create git history of selected branches and write into `path/to/file`
+<br></br>
 
-`:GitToMdBuffer` - create git history and save into clipboard
+`:GitToMdBuffer clipboard_name branch1 branch2 branch3...` 
+- Create git history of selected branches and save into clipboard 
+<br></br>
+
+> [!WARNING]
+> Be careful when copying to the clipboard. It may **overflow**.
+
+> [!NOTE]
+> The first argument is **required**, the next ones are not, and they contain the branch names. By default git history contains **all** branches.
 
 ## Configuration
+`clipboard_name` - it's set name for clipboard of first argument in nvim
+
 You can set custom style in **formats**
 
 ---
