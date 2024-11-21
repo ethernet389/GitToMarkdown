@@ -2,7 +2,7 @@ require('git-to-md.converter')
 require('git-to-md.formats')
 
 local tmp_file = ".there_is_nothing_to_see.go_away.tmp.lua.txt.lol.out"
-local validate_branch = "git rev-list %s --"
+local buf_size = 2^13
 
 local M = {}
 
@@ -27,11 +27,17 @@ local git_markdown_buffer = function(spec_branches)
   if not markdown then
     error("Can't open " .. tmp_file .. "!")
   end
-  local text = markdown:read("a")
 
-  vim.fn.setreg('+', text)
+  while true do
+    local buffer = markdown:read(buf_size)
+    if buffer == nil then break end
+
+    local new_buf = vim.fn.getreg('+') .. buffer
+    vim.fn.setreg('+', new_buf)
+  end
 
   markdown:close()
+
   os.remove(tmp_file)
 end
 
@@ -47,35 +53,6 @@ local function get_branches_from_cmd(opts)
   return branches
 end
 
-local function validate_branches(branches)
-  if not branches then
-    return nil
-  end
-
-  local msg = nil
-  for branch, _ in pairs(branches) do
-    local command = 
-      validate_branch:format(branch) ..
-      " 2> " .. tmp_file .. '.err' ..
-      " 1> " .. tmp_file
-    os.execute(command)
-
-    local output = io.open(tmp_file, "r")
-    if not output then
-      error("Can't open " .. tmp_file .. "!")
-    end
-
-    if output:read("a") == "" then
-      msg = 'Branch "' .. branch .. '" doesn\'t exist!\n'
-      break
-    end
-  end
-
-  os.remove(tmp_file .. '.err')
-  os.remove(tmp_file)
-  return msg
-end
-
 local function nvim_git_to_md(opts, clipboard)
   if not opts.fargs[1] then
     vim.api.nvim_err_writeln(
@@ -85,7 +62,7 @@ local function nvim_git_to_md(opts, clipboard)
   end
 
   local branches = get_branches_from_cmd(opts)
-  local err = validate_branches(branches)
+  local err = conv.validate_branches(branches)
   if err then
     vim.api.nvim_err_writeln(err)
     return
@@ -94,6 +71,10 @@ local function nvim_git_to_md(opts, clipboard)
   local msg = ""
 
   if opts.fargs[1] == clipboard then
+    if not opts.fargs[2] then
+      
+    end
+
     err = git_markdown_buffer(branches)
     msg = "Git history saved in the clipboard\n"
   else
@@ -107,7 +88,6 @@ local function nvim_git_to_md(opts, clipboard)
   end
 
   vim.api.nvim_out_write(msg)
-
 end
 
 M.setup = function (new_formats, clipboard)

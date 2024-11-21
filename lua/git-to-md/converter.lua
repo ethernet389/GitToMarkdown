@@ -2,6 +2,8 @@ require("git-to-md.formats")
 
 _G.conv = {}
 
+local buf_size = 2^13
+
 local tmp_file = ".there_is_nothing_to_see.go_away.tmp.lua.txt.lol"
 
 local git_check = 'git rev-parse --git-dir'
@@ -44,6 +46,35 @@ conv.get_branches = function()
   return branches
 end
 
+conv.validate_branches = function(branches)
+  if not branches then
+    return nil
+  end
+
+  local msg = nil
+  for branch, _ in pairs(branches) do
+    local command = 
+      get_branch_commits:format(branch) ..
+      " 2> " .. tmp_file .. '.err' ..
+      " 1> " .. tmp_file
+    os.execute(command)
+
+    local output = io.open(tmp_file, "r")
+    if not output then
+      error("Can't open " .. tmp_file .. "!")
+    end
+
+    if output:read("a") == "" then
+      msg = 'Branch "' .. branch .. '" doesn\'t exist!\n'
+      break
+    end
+  end
+
+  os.remove(tmp_file .. '.err')
+  os.remove(tmp_file)
+  return msg
+end
+
 conv.get_branch_commits = function(branches)
   for branch, commits in pairs(branches) do
     os.execute(get_branch_commits:format(branch) .. ">" .. tmp_file)
@@ -84,7 +115,12 @@ conv.write_commit_info = function(output, commit)
     error("Can't open temporary file!")
   end
 
-  output:write(tmp:read("a"))
+  while true do
+    local buffer = tmp:read(buf_size)
+    if buffer == nil then break end
+    output:write(buffer)
+  end
+
   tmp:close()
   os.remove(tmp_file)
 end
