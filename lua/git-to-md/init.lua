@@ -71,10 +71,6 @@ local function nvim_git_to_md(opts, clipboard)
   local msg = ""
 
   if opts.fargs[1] == clipboard then
-    if not opts.fargs[2] then
-      
-    end
-
     err = git_markdown_buffer(branches)
     msg = "Git history saved in the clipboard\n"
   else
